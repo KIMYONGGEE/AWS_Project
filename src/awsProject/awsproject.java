@@ -10,6 +10,10 @@ import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.DryRunResult;
+import com.amazonaws.services.ec2.model.DryRunSupportedRequest;
+import com.amazonaws.services.ec2.model.StartInstancesRequest;
+import com.amazonaws.services.ec2.model.StopInstancesRequest;
 
 public class awsproject {
 
@@ -30,11 +34,12 @@ public class awsproject {
 		}
 		ec2 = AmazonEC2ClientBuilder.standard()
 		.withCredentials(credentialsProvider)
-		.withRegion("us-east-2") /* check the region at AWS console */
+		.withRegion("us-east-1") /* check the region at AWS console */
 		.build();
 	}
 	public static void main(String[] args) throws Exception {
 		init();
+		String in_id;
 		Scanner menu = new Scanner(System.in);
 		Scanner id_string = new Scanner(System.in);
 		int number = 0;
@@ -55,6 +60,24 @@ public class awsproject {
 			System.out.println(" 99. quit ");
 			System.out.println("------------------------------------------------------------");
 			System.out.print("Enter an integer: ");
+			number = menu.nextInt();
+			
+			switch(number) {
+			case 1:
+				listInstances();
+				break;
+			case 3:
+				System.out.println("Enter Instance Id : ");
+				in_id = id_string.nextLine();
+				startInstance(in_id);
+				break;
+			case 5:
+				System.out.println("Enter Instance Id : ");
+				in_id = id_string.nextLine();
+				stopInstance(in_id);
+				break;
+			
+			}
 		}
 
 	}
@@ -92,4 +115,61 @@ public class awsproject {
 
 
 	}
+	public static void startInstance(String instance_id)
+    {
+        AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
+
+        DryRunSupportedRequest<StartInstancesRequest> dry_request =
+            () -> {
+            StartInstancesRequest request = new StartInstancesRequest()
+                .withInstanceIds(instance_id);
+
+            return request.getDryRunRequest();
+        };
+        DryRunResult dry_response = ec2.dryRun(dry_request);
+
+        if(!dry_response.isSuccessful()) {
+            System.out.printf(
+                "Failed dry run to start instance %s", instance_id);
+
+            throw dry_response.getDryRunResponse();
+        }
+
+        StartInstancesRequest request = new StartInstancesRequest()
+            .withInstanceIds(instance_id);
+
+        ec2.startInstances(request);
+
+        System.out.printf("Successfully started instance %s", instance_id);
+    }
+	
+	public static void stopInstance(String instance_id)
+    {
+        final AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
+
+        DryRunSupportedRequest<StopInstancesRequest> dry_request =
+            () -> {
+            StopInstancesRequest request = new StopInstancesRequest()
+                .withInstanceIds(instance_id);
+
+            return request.getDryRunRequest();
+        };
+
+        DryRunResult dry_response = ec2.dryRun(dry_request);
+
+        if(!dry_response.isSuccessful()) {
+            System.out.printf(
+                "Failed dry run to stop instance %s", instance_id);
+            throw dry_response.getDryRunResponse();
+        }
+
+        StopInstancesRequest request = new StopInstancesRequest()
+            .withInstanceIds(instance_id);
+
+        ec2.stopInstances(request);
+
+        System.out.printf("Successfully stop instance %s", instance_id);
+    }
+
+	
 }
