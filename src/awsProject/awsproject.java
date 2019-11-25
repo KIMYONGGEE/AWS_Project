@@ -14,6 +14,11 @@ import com.amazonaws.services.ec2.model.DryRunResult;
 import com.amazonaws.services.ec2.model.DryRunSupportedRequest;
 import com.amazonaws.services.ec2.model.StartInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeRegionsResult;
+import com.amazonaws.services.ec2.model.Region;
+import com.amazonaws.services.ec2.model.AvailabilityZone;
+import com.amazonaws.services.ec2.model.DescribeAvailabilityZonesResult;
+
 
 public class awsproject {
 
@@ -66,17 +71,23 @@ public class awsproject {
 			case 1:
 				listInstances();
 				break;
+			case 2:
+				AvailableZone();
+				break;
 			case 3:
 				System.out.println("Enter Instance Id : ");
 				in_id = id_string.nextLine();
 				startInstance(in_id);
+				break;
+			case 4:
+				AvailableRegin();
 				break;
 			case 5:
 				System.out.println("Enter Instance Id : ");
 				in_id = id_string.nextLine();
 				stopInstance(in_id);
 				break;
-			
+		
 			}
 		}
 
@@ -170,6 +181,46 @@ public class awsproject {
 
         System.out.printf("Successfully stop instance %s", instance_id);
     }
+	
+	public static void AvailableZone()
+	{
+	        AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
+
+	        DescribeAvailabilityZonesResult zones_response =
+	            ec2.describeAvailabilityZones();
+
+	        for(AvailabilityZone zone : zones_response.getAvailabilityZones()) {
+	            System.out.printf(
+	                "Found availability zone %s " +
+	                "with status %s " +
+	                "in region %s",
+	                zone.getZoneName(),
+	                zone.getState(),
+	                zone.getRegionName());
+	            System.out.printf("\n");
+	        }
+	        
+	    
+	}
+	public static void AvailableRegin ()
+	{
+	  
+	        AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
+
+	        DescribeRegionsResult regions_response = ec2.describeRegions();
+
+	        for(Region region : regions_response.getRegions()) {
+	            System.out.printf(
+	                "Found region %s " +
+	                "with endpoint %s",
+	                region.getRegionName(),
+	                region.getEndpoint());
+	            System.out.printf("\n");
+	        }
+
+	        
+	    
+	}
 
 	
 }
