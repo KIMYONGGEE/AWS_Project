@@ -99,7 +99,7 @@ public class awsproject {
 				AvailableZone();
 				break;
 			case 3:
-				System.out.println("Enter Instance Id : ");
+				System.out.println("Enter Instance Id to start : ");
 				in_id = id_string.nextLine();
 				startInstance(in_id);
 				break;
@@ -107,7 +107,7 @@ public class awsproject {
 				AvailableRegin();
 				break;
 			case 5:
-				System.out.println("Enter Instance id  : ");
+				System.out.println("Enter Instance id to stop : ");
 				in_id = id_string.nextLine();
 				stopInstance(in_id);
 				break;
@@ -119,7 +119,7 @@ public class awsproject {
 				CreateInstance(in_id, in_name);
 				break;
 			case 7:
-				System.out.println("Enter Instance id  : ");
+				System.out.println("Enter Instance id to reboot : ");
 				in_id = id_string.nextLine();
 				RebootInstance(in_id);
 				break;
@@ -177,107 +177,111 @@ public class awsproject {
 	public static void startInstance(String instance_id) {
 	
 
-		DryRunSupportedRequest<StartInstancesRequest> dry_request = () -> {
+		DryRunSupportedRequest<StartInstancesRequest> Runrequest = () -> {
 			StartInstancesRequest request = new StartInstancesRequest().withInstanceIds(instance_id);
-
 			return request.getDryRunRequest();
 		};
-		DryRunResult dry_response = ec2.dryRun(dry_request);
+		DryRunResult Runresponse = ec2.dryRun(Runrequest);
+		
 
-		if (!dry_response.isSuccessful()) {
-			System.out.printf("Failed dry run to start instance %s", instance_id);
-
-			throw dry_response.getDryRunResponse();
-		}
-
+        if(!Runresponse.isSuccessful()) {
+            System.out.printf(
+                "Error to start instance %s", instance_id);
+            throw Runresponse.getDryRunResponse();
+        }
+        
 		StartInstancesRequest request = new StartInstancesRequest().withInstanceIds(instance_id);
-
 		ec2.startInstances(request);
-
-		System.out.printf("Successfully started instance %s", instance_id);
+		System.out.printf("started instance %s", instance_id);
+		
 	}
 
 	public static void stopInstance(String instance_id) {
-		final AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
 
-		DryRunSupportedRequest<StopInstancesRequest> dry_request = () -> {
+		DryRunSupportedRequest<StopInstancesRequest> Runrequest = () -> {
 			StopInstancesRequest request = new StopInstancesRequest().withInstanceIds(instance_id);
-
 			return request.getDryRunRequest();
 		};
 
-		DryRunResult dry_response = ec2.dryRun(dry_request);
-
-		if (!dry_response.isSuccessful()) {
-			System.out.printf("Failed dry run to stop instance %s", instance_id);
-			throw dry_response.getDryRunResponse();
-		}
-
+		DryRunResult Runresponse = ec2.dryRun(Runrequest);
+		
+		 if(!Runresponse.isSuccessful()) {
+	            System.out.printf(
+	                "Error to stop instance %s", instance_id);
+	            throw Runresponse.getDryRunResponse();
+	     }
 		StopInstancesRequest request = new StopInstancesRequest().withInstanceIds(instance_id);
-
 		ec2.stopInstances(request);
-
-		System.out.printf("Successfully stop instance %s", instance_id);
+		System.out.printf("stop instance %s", instance_id);
 	}
 
 	public static void AvailableZone() {
+
+		DescribeAvailabilityZonesResult AVailZoneResponse = ec2.describeAvailabilityZones();
 		
 
-		DescribeAvailabilityZonesResult zones_response = ec2.describeAvailabilityZones();
-
-		for (AvailabilityZone zone : zones_response.getAvailabilityZones()) {
-			System.out.printf("Found availability zone %s " + "with status %s " + "in region %s", zone.getZoneName(),
-					zone.getState(), zone.getRegionName());
-			System.out.printf("\n");
+		for (AvailabilityZone AvailableZone : AVailZoneResponse.getAvailabilityZones()) {
+			if(AvailableZone.getZoneName() == null){
+				break;
+			}
+			else {
+				System.out.printf("{Zone : %s " + "} {status : %s }" , AvailableZone.getZoneName(),
+						AvailableZone.getState() );
+				System.out.printf("\n");
+			}
 		}
+		
+	
 
 	}
 
 	public static void AvailableRegin() {
+	
+		DescribeRegionsResult AVailReginResponse = ec2.describeRegions();
 
+		for (Region Availeregion : AVailReginResponse.getRegions()) {
+			if(Availeregion.getRegionName() == null){
+				break;
+			}
+			else {
+				System.out.printf("{region : %s " + "} {endpoint : %s" + "} {Optstatus : %s}", Availeregion.getRegionName(), Availeregion.getEndpoint(), Availeregion.getOptInStatus());
+				System.out.printf("\n");
+		
+			}
 
-		DescribeRegionsResult regions_response = ec2.describeRegions();
-
-		for (Region region : regions_response.getRegions()) {
-			System.out.printf("Found region %s " + "with endpoint %s", region.getRegionName(), region.getEndpoint());
-			System.out.printf("\n");
 		}
-
 	}
 	 public static void CreateInstance(String instance_id, String instance_name)
-	    {
+	   {
 	        String name =  instance_name; 
 	        String ami_id = instance_id;
 
-	        RunInstancesRequest run_request = new RunInstancesRequest()
+	        RunInstancesRequest InstaceRequest = new RunInstancesRequest()
 	            .withImageId(ami_id)
 	            .withInstanceType(InstanceType.T2Micro)
 	            .withMaxCount(1)
 	            .withMinCount(1)
 	            .withKeyName("awskey");
 
-	        RunInstancesResult run_response = ec2.runInstances(run_request);
-
-	        String reservation_id = run_response.getReservation().getInstances().get(0).getInstanceId();
+	        RunInstancesResult InstanceResponse = ec2.runInstances(InstaceRequest);
+	    
+	        String CreatInstaceID = InstanceResponse.getReservation().getInstances().get(0).getInstanceId();
 	    
 	        System.out.printf(
-	            "Successfully started EC2 instance %s based on AMI %s",
-	            reservation_id, ami_id);
+	            "{New instance : %s}{ parent AMI : %s}",
+	            CreatInstaceID, name);
 	    }
 	 public static void RebootInstance(String in_id)
 	    {
-
 	        String instance_id = in_id;
 
-	      
-
-	        RebootInstancesRequest request = new RebootInstancesRequest()
+	        RebootInstancesRequest Rebootrequest = new RebootInstancesRequest()
 	            .withInstanceIds(instance_id);
 
-	        RebootInstancesResult response = ec2.rebootInstances(request);
+	        RebootInstancesResult Rebootresponse = ec2.rebootInstances(Rebootrequest);
 
 	        System.out.printf(
-	            "Successfully rebooted instance %s", instance_id);
+	            "{ rebooted instance id : %s }", instance_id);
 	    }
 	 public static void TerminateInstance(String in_id)
 	 {
@@ -285,35 +289,35 @@ public class awsproject {
 			terminateInstancesRequest.withInstanceIds(in_id);
 			ec2.terminateInstances(terminateInstancesRequest);	
 			System.out.printf(
-		            "Successfully Terminated EC2 instance %s",
+		            "{ Terminated instance id : %s }",
 					in_id);
 	 }
 	 
 	 public static void ImageList() {
-		 System.out.println("Listing Images I10nfo....");
+		 System.out.println("Listing Images Info....");
 				
 		   DescribeImagesRequest request = new DescribeImagesRequest();
 		   request.withOwners("self");
 		   DescribeImagesResult response = ec2.describeImages(request);
 		   
 			for (Image AMI : response.getImages()) {
-				System.out.println("Image Create Date:" + AMI.getCreationDate());
-				System.out.println("Image ID:" + AMI.getImageId());
-				System.out.println("Image Status:" + AMI.getState());
-				System.out.println("Image Type:" + AMI.getImageType() + "\n");
+				System.out.println("{ Image Create Date:" + AMI.getCreationDate()+"}");
+				System.out.println("{ Image ID: " + AMI.getImageId()+"}");
+				System.out.println("{ Image Status:" + AMI.getState()+"}");
+				System.out.println("{ Image Type:" + AMI.getImageType() + "} \n");
 			}
 
 		}
 	 
 	 public static void CreateAMI(String instance_id, String AMI_name) {
 		 
+		 	System.out.println("Creating AMI....");
 			CreateImageRequest create = new CreateImageRequest();
 			create.withInstanceId(instance_id);
 			create.withName(AMI_name);
 			
 			ec2.createImage(create);
-			  System.out.printf(
-			            "Successfully Create EC2  %s AMI From %s",
+			  System.out.printf("{ Created AMI name : %s } { Parent Instacne :  %s }",
 			             AMI_name, instance_id);
 	 }
 	 
